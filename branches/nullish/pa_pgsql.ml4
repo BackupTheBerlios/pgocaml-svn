@@ -64,14 +64,17 @@ let rex = Pcre.regexp "\\$(@?)(\\??)([_a-z][_a-zA-Z0-9']*)"
 let pgsql_expand ?(flags = []) loc dbh query =
   (* Parse the flags. *)
   let f_execute = ref false in
-  let f_nullable_results = ref false in
+  let f_nullable_fields = ref false in
+  let f_notnull_fields = ref false in
   let key = ref { host = None; port = None; user = None;
 		  password = None; database = None;
 		  unix_domain_socket_dir = None } in
   List.iter (
     function
     | "execute" -> f_execute := true
-    | "nullable-results" -> f_nullable_results := true
+    | "nullable-results" -> f_nullable_fields := true	(* Legacy support: remove in future versions. *)
+    | "nullable-fields(*)" -> f_nullable_fields := true
+    | "notnull-fields(*)" -> f_notnull_fields := true
     | str when String.starts_with str "host=" ->
 	let host = String.sub str 5 (String.length str - 5) in
 	key := { !key with host = Some host }
@@ -96,7 +99,8 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	)
   ) flags;
   let f_execute = !f_execute in
-  let f_nullable_results = !f_nullable_results in
+  let f_nullable_fields = !f_nullable_fields in
+  let f_notnull_fields = !f_notnull_fields in
   let key = !key in
 
   (* Connect, if necessary, to the database. *)
@@ -302,7 +306,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	      PGOCaml.name_of_type ~modifier field_type in
 	    let fn = fn ^ "_of_string" in
 	    let nullable =
-	      f_nullable_results ||
+	      f_nullable_fields ||
 	      match (result.PGOCaml.table, result.PGOCaml.column) with
 	      | Some table, Some column ->
 		  (* Find out whether the column is nullable from the
@@ -318,7 +322,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
 		    | [ [ Some b ] ] -> PGOCaml.bool_of_string b
 		    | _ -> false in
 		  not not_nullable
-	      | _ -> true (* Assume it could be nullable. *) in
+	      | _ -> not f_notnull_fields in
 	    let col = <:expr< $lid:"c" ^ string_of_int i$ >> in
 	    if nullable then
 	      <:expr< Option.map PGOCaml.$lid:fn$ $col$ >>
