@@ -8,7 +8,7 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="600"
+   width="528"
    height="200"
    id="svg2"
    sodipodi:version="0.32"
@@ -52,14 +52,6 @@
        sodipodi:type="inkscape:persp3d" />
     <filter
        inkscape:collect="always"
-       id="filter3189">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="1.0985449"
-         id="feGaussianBlur3191" />
-    </filter>
-    <filter
-       inkscape:collect="always"
        id="filter3214">
       <feGaussianBlur
          inkscape:collect="always"
@@ -85,9 +77,9 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.3958334"
-     inkscape:cx="336.97088"
-     inkscape:cy="63.19841"
+     inkscape:zoom="1.9740065"
+     inkscape:cx="361.44692"
+     inkscape:cy="79.10079"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
