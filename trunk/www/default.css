@@ -2,7 +2,7 @@ body
 	{
 	margin: auto;
 	padding: 1em 0 2em;
-	width: 50em;
+	width: 54em;
 	font-family: "Arial", sans-serif;
 	font-size: 100%;
 	color: #333;
@@ -37,3 +37,22 @@ li
 	margin-bottom: 0.25em;
 	}
 
+dt
+	{
+	margin: 0.5em 0 0.5em 1em;
+	font-weight: bold;
+	text-decoration: underline;
+	}
+
+code
+	{
+	color: #090;
+	}
+
+pre
+	{
+	margin: 1em;
+	padding: 0.5em;
+	border: 1px dotted #000;
+	background: #ffe;
+	}

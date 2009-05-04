@@ -13,16 +13,21 @@
 <div id="root">
 
 	<div id="header">
-		<h1><span>PGO'Caml</span></h1>
+		<h1><span>PG'OCaml</span></h1>
 	</div>
 
 	<div id="canvas">
 
-		<h1>About</h1>
+		<h1>About PG'OCaml</h1>
 
-		<p><strong>PG'OCaml</strong> is a type-safe, simple interface to
-		PostgreSQL from Ocaml. It lets you embed SQL statements directly into
-		Ocaml code.</p>
+		<p><strong>PG'OCaml</strong> provides an interface to <strong>PostgreSQL</strong>
+		databases for <strong>Ocaml</strong> applications.  It uses Camlp4 to extend the Ocaml
+		syntax, enabling one to directly embed SQL statements inside the Ocaml code.  Moreover,
+		it uses the <em>describe</em> feature of PostgreSQL to obtain type information about
+		the database.  This allows PG'OCaml to check <strong>at compile-time</strong> if the
+		program is indeed consistent with the database structure.  This type-safe database
+		access is the primary advantage that PG'OCaml has over other PostgreSQL bindings
+		for Ocaml.</p>
 
 		<h1>Example</h1>
 
@@ -31,27 +36,90 @@
     <span style="color:blue">let</span> dbh = <span style="color:brown">PGOCaml</span>.connect () <span style="color:blue">in</span>
 
     <span style="color:blue">let</span> insert name salary email =
-        PGSQL(dbh) <span style="color:purple">"insert into employees (name, salary, email) values ($name, $salary, $?email)"</span>
+        PGSQL(dbh) <span style="color:purple">&quot;insert into employees (name, salary, email) values ($name, $salary, $?email)&quot;</span>
     <span style="color:blue">in</span>
-        insert <span style="color:purple">"Ann"</span> <span style="color:green">10_000_l</span> <span style="color:red">None</span>;
-        insert <span style="color:purple">"Bob"</span> <span style="color:green">45_000_l</span> <span style="color:red">None</span>;
-        insert <span style="color:purple">"Jim"</span> <span style="color:green">20_000_l</span> <span style="color:red">None</span>;
-        insert <span style="color:purple">"Mary"</span> <span style="color:green">30_000_l</span> (<span style="color:red">Some</span> <span style="color:purple">"mary@example.com"</span>);
+        insert <span style="color:purple">&quot;Ann&quot;</span> <span style="color:green">10_000_l</span> <span style="color:red">None</span>;
+        insert <span style="color:purple">&quot;Bob&quot;</span> <span style="color:green">45_000_l</span> <span style="color:red">None</span>;
+        insert <span style="color:purple">&quot;Jim&quot;</span> <span style="color:green">20_000_l</span> <span style="color:red">None</span>;
+        insert <span style="color:purple">&quot;Mary&quot;</span> <span style="color:green">30_000_l</span> (<span style="color:red">Some</span> <span style="color:purple">&quot;mary@example.com&quot;</span>);
  
     <span style="color:blue">let</span> print_row (id, name, salary, email) =
-        <span style="color:blue">let</span> email = <span style="color:blue">match</span> email <span style="color:blue">with</span> <span style="color:red">Some</span> email -&gt; email | <span style="color:red">None</span> -&gt; "-"
-        <span style="color:blue">in</span> <span style="color:brown">Printf</span>.printf <span style="color:purple">"%ld %S %ld %S\n"</span> id name salary email <span style="color:blue">in</span>
+        <span style="color:blue">let</span> email = <span style="color:blue">match</span> email <span style="color:blue">with</span> <span style="color:red">Some</span> email -&gt; email | <span style="color:red">None</span> -&gt; <span style="color:purple">&quot;-&quot;</span>
+        <span style="color:blue">in</span> <span style="color:brown">Printf</span>.printf <span style="color:purple">&quot;%ld %S %ld %S\n&quot;</span> id name salary email <span style="color:blue">in</span>
 
     <span style="color:blue">let</span> rows =
-        PGSQL(dbh) <span style="color:purple">"select id, name, salary, email from employees"</span>
+        PGSQL(dbh) <span style="color:purple">&quot;select id, name, salary, email from employees&quot;</span>
     <span style="color:blue">in</span> <span style="color:brown">List</span>.iter print_row rows;
  
     <span style="color:brown">PGOCaml</span>.close dbh
 		</pre>
 
+		<h1>Download</h1>
+
+		<p>The latest version is 1.2.  Starting with this version, PG'OCaml comes in two varieties:</p>
+
+		<dl>
+			<dt>pgocaml</dt>
+			<dd>
+			<p>This variant is the successor to the older versions of PG'OCaml.  The code base is unchanged and
+			the API remains the same.  This is the variant you want if you've used older versions of
+			PG'OCaml and you wish to upgrade.</p>
+			<p>Download <a href="pgocaml-1.2.tar.gz">pgocaml-1.2.tar.gz</a> (approx 40K)</p>
+			</dd>
+
+			<dt>pgocaml-monadic</dt>
+			<dd>
+			<p>This branch was contributed by <a href="http://www.pps.jussieu.fr/~vouillon/">Jérôme Vouillon</a>,
+			and rewrites PG'OCaml's internals and API to work in a monadic style.  Though flexible enough to be used with
+			any monad, the most obvious use of this branch is to integrate PG'OCaml with an application that uses
+			the light-weight threads of the <a href="http://ocsigen.org/lwt">Lwt</a> library.  If you are developing
+			an application for the <a href="">Ocsigen</a> web server, this is the variant you need.</p>
+			<p>Download <a href="pgocaml-monadic-1.2.tar.gz">pgocaml-monadic-1.2.tar.gz</a> (approx 40K)</p>
+			</dd>
+		</dl>
+
+		<p>You can also obtain the latest SVN versions from the <a
+		href="http://developer.berlios.de/projects/pgocaml/">project's page</a>
+		at BerliOS.</p>
+
+		<p>PG'OCaml Copyright © 2006 Merjis Ltd, Richard W.M. Jones
+		(<a href="mailto:&#x72;&#x69;ch@merjis.com" class="mailto"
+		title="mailto:rich@merjis.com">rich@merjis.com</a>)</p>
+		<p>This software is distributed under the <a
+		href="http://www.gnu.org/copyleft/lesser.html" class="external"
+		title="http://www.gnu.org/copyleft/lesser.html">GNU LGPL</a> with
+		the Ocaml linking exception.  Please see the file <code>COPYING.LIB</code>
+		for full license.</p>
+
+		<h1>Building instructions</h1>
+
+		<p>PG'OCaml has the following requirements: (note that all dependencies are available on Debian/Fedora/GODI)</p>
+
+		<ul>
+		<li><a href="http://caml.inria.fr/">Ocaml</a> (PG'OCaml requires Ocaml version 3.10.0 or higher)</li>
+		<li><a href="http://www.ocaml-programming.de/packages/" class="external" title="http://www.ocaml-programming.de/packages/">Findlib</a></li>
+		<li><a href="http://ocaml-lib.sourceforge.net/" class="external" title="http://ocaml-lib.sourceforge.net/">ExtLib</a></li>
+		<li><a href="http://www.ocaml.info/home/ocaml_sources.html" class="external" title="http://www.ocaml.info/home/ocaml_sources.html">PCRE</a></li>
+		<li><a href="http://www.lri.fr/~signoles/prog.en.html" class="external" title="http://www.lri.fr/~signoles/prog.en.html">Calendar</a></li>
+		<li><a href="/developers/csv" class="internal" title="Developers/CSV">CSV library</a></li>
+		</ul>
+
+		<p>Before you attempt to build the source-code, take a look at
+		<code>Makefile.config</code> and check that it conforms to your system's
+		configuration.	To build issue <code>make depend</code> followed by
+		<code>make</code>.	You can perform a findlib installation with <code>make
+		findlib_install</code> and a system-wide installation with <code>make
+		install</code>.</p>
+
+		<h1>Documentation</h1>
+
+		<p>Dario Teixeira wrote a tutorial for PG'OCaml: <a href="http://dario.dse.nl/projects/pgoctut/" class="external" title="http://dario.dse.nl/projects/pgoctut/">http://dario.dse.nl/projects/pgoctut/</a></p>
+		<p>There is also documentation included with the package (issue <code>make doc</code>), although it is rather sparse.</p>
+		<p>Also see the source for <a href="http://sandbox.merjis.com" class="external" title="http://sandbox.merjis.com">COCANWIKI</a>.</p>
+
 		<h1>Differences from other PostgreSQL bindings</h1>
 
-		<p>Please note that this isn't the first or only PGSQL binding. Here are some others you may wish to consider:</p>
+		<p>Please note that this is not the first or only PostgreSQL binding for Ocaml. Here are some others you may wish to consider:</p>
 
 		<ul>
 			<li><a href="http://www.ocaml.info/home/ocaml_sources.html" class="external" title="http://www.ocaml.info/home/ocaml_sources.html">PostgreSQL-OCaml by Markus Mottl</a></li>
@@ -63,50 +131,64 @@
 		<p>PG'OCAML is different from the above bindings:</p>
 
 		<ol>
-			<li>It <em>isn't</em> just a wrapper around the <a href="http://www.postgresql.org/docs/current/static/libpq.html" class="external" title="http://www.postgresql.org/docs/current/static/libpq.html">C libpq library</a>.  Instead it's a pure OCaml library which talks the <a href="http://www.postgresql.org/docs/current/static/protocol.html" class="external" title="http://www.postgresql.org/docs/current/static/protocol.html">frontend/backend protocol</a> directly with the database.</li>
-			<li>It has a camlp4 layer which lets you write SQL statements directly in your code, <em>type safe</em> at compile time, with <em>type inference</em> into the SQL, and using the full PostgreSQL SQL grammar (sub-selects, PG-specific SQL, etc.).  But the flip side of this is that you need to have access to the database at <em>compile</em> time, so the type checking magic can be done; also if you change the database schema, you will need to recompile your code to check it is still correctly typed.</li>
-			<li>(A minor point) - It requires PostgreSQL &gt;= 7.4.  It's also synchronous, so if you want to have an interactive interface you'll need to use threads.</li>
-			<li>It doesn't work with other databases, nor will it ever work with other databases.</li>
+			<li>It <strong>is not</strong> just a wrapper around the <a
+			href="http://www.postgresql.org/docs/current/static/libpq.html"
+			class="external"
+			title="http://www.postgresql.org/docs/current/static/libpq.html">C
+			libpq library</a>.  Instead it's
+			a pure Ocaml library that talks the <a
+			href="http://www.postgresql.org/docs/current/static/protocol.html"
+			class="external"
+			title="http://www.postgresql.org/docs/current/static/protocol.html">frontend/backend
+			protocol</a> directly with the database.</li>
+
+			<li>It has a Camlp4 layer which lets you write SQL statements
+			directly in your code, <em>type safe</em> at compile time,
+			with <em>type inference</em> into the SQL, and using the full
+			PostgreSQL SQL grammar (sub-selects, PG-specific SQL, etc.).
+			But the flip side of this is that you need to have access to
+			the database at <em>compile</em> time, so the type checking
+			magic can be done; also if you change the database schema,
+			you will need to recompile your code to check it is still
+			correctly typed.</li>
+
+			<li>It requires PostgreSQL &gt;= 7.4.  It's also synchronous,
+			so if you want to have an interactive interface you'll need
+			to use threads.</li>
+
+			<li>It does not work with other databases, nor will it ever
+			work with other databases.</li>
 		</ol>
-
-		<h1>Download</h1>
-
-		<p>These versions are now historical.  Latest versions can be obtained from this site: <a href="http://developer.berlios.de/projects/pgocaml/" class="external" title="http://developer.berlios.de/projects/pgocaml/">http://developer.berlios.de/projects/pgocaml/</a></p>
-		<p>PG'OCaml Copyright © 2006 Merjis Ltd, Richard W.M. Jones (<a href="mailto:&#x72;&#x69;ch@merjis.com" class="mailto" title="mailto:rich@merjis.com">rich@merjis.com</a>)</p>
-		<p>This software is distributed under the <a href="http://www.gnu.org/copyleft/lesser.html" class="external" title="http://www.gnu.org/copyleft/lesser.html">GNU LGPL</a> with OCaml linking exception.  Please see the file <code>COPYING.LIB</code> for full license.</p>
-
-		<ul>
-			<li><a href="/_file/pgocaml-1.0.tar.gz">pgocaml-1.0.tar.gz</a> (approx 35K) (for OCaml 3.10.0)</li>
-			<li><a href="/_file/pgocaml-0.9.tar.gz">pgocaml-0.9.tar.gz</a> (approx 35K) (for OCaml 3.10.0)</li>
-			<li><a href="/_file/pgocaml-0.8.tar.gz">pgocaml-0.8.tar.gz</a> (approx 33K) (for OCaml &lt;= 3.09)</li>
-		</ul>
-
-		<h1>Requirements</h1>
-
-		<ul>
-
-			<li><a href="http://www.ocaml-programming.de/packages/" class="external" title="http://www.ocaml-programming.de/packages/">findlib</a></li>
-			<li>For versions up to 0.8: <a href="http://caml.inria.fr/" class="external" title="http://caml.inria.fr/">OCaml</a> 3.08 or 3.09</li>
-			<li>For versions 0.9 and above: OCaml &gt;= 3.10.0</li>
-			<li><a href="http://ocaml-lib.sourceforge.net/" class="external" title="http://ocaml-lib.sourceforge.net/">ExtLib</a></li>
-			<li><a href="http://www.ocaml.info/home/ocaml_sources.html" class="external" title="http://www.ocaml.info/home/ocaml_sources.html">PCRE</a></li>
-			<li><a href="http://www.lri.fr/~signoles/prog.en.html" class="external" title="http://www.lri.fr/~signoles/prog.en.html">Calendar</a></li>
-			<li><a href="/developers/csv" class="internal" title="Developers/CSV">CSV library</a></li>
-		</ul>
-
-		<h1>Documentation</h1>
-
-		<p>Dario Teixeira wrote a tutorial for PG'OCaml: <a href="http://dario.dse.nl/projects/pgoctut/" class="external" title="http://dario.dse.nl/projects/pgoctut/">http://dario.dse.nl/projects/pgoctut/</a></p>
-		<p>There is also documentation included with the package, although it is rather sparse.</p>
-		<p>Also see the source for <a href="http://sandbox.merjis.com" class="external" title="http://sandbox.merjis.com">COCANWIKI</a>.</p>
 
 		<h1>Status</h1>
 
 		<ul>
-			<li>SSL is not implemented.  Adding this requires using <a href="http://savonet.sourceforge.net/ocamldoc/ocaml-ssl/Ssl.html" class="external" title="http://savonet.sourceforge.net/ocamldoc/ocaml-ssl/Ssl.html">OCaml-SSL</a> and reading the <a href="http://www.postgresql.org/docs/current/static/protocol-flow.html#AEN60549" class="external" title="http://www.postgresql.org/docs/current/static/protocol-flow.html#AEN60549">SSL section of the protocol manual</a> carefully.</li>
-			<li>Kerberos authentication isn't implemented, and probably can't be because there aren't any Kerberos client libraries for OCaml.</li>
-			<li><code>crypt(3)</code> isn't implemented, because I'm not aware of any implementation of this function in OCaml.  Anyway, crypt is insecure.</li>
-			<li>Many data types are not implemented.  I am adding them as I use them.  Adding a data type is pretty simple: look at <code>/usr/include/postgresql/catalog/pg_type.h</code> to find the OID for your type, edit <code>pGOCaml.ml:name_of_type</code> function to add the appropriate OID to type name mapping, and then add two functions <code><em>type</em>_of_string</code> and <code>string_of_<em>type</em></code> to perform the translation to and from strings.</li>
+			<li>SSL is not implemented.  Adding this requires using <a
+			href="http://savonet.sourceforge.net/ocamldoc/ocaml-ssl/Ssl.html"
+			class="external"
+			title="http://savonet.sourceforge.net/ocamldoc/ocaml-ssl/Ssl.html">OCaml-SSL</a>
+			and reading the <a
+			href="http://www.postgresql.org/docs/current/static/protocol-flow.html#AEN60549"
+			class="external"
+			title="http://www.postgresql.org/docs/current/static/protocol-flow.html#AEN60549">SSL
+			section of the protocol manual</a> carefully.</li>
+
+			<li>Kerberos authentication isn't implemented, and probably
+			can't be because there aren't any Kerberos client libraries
+			for OCaml.</li>
+
+			<li><code>crypt(3)</code> isn't implemented, because I'm
+			not aware of any implementation of this function in OCaml.
+			Anyway, crypt is insecure.</li>
+
+			<li>Many data types are not implemented.  I am adding them
+			as I use them.	Adding a data type is pretty simple: look at
+			<code>/usr/include/postgresql/catalog/pg_type.h</code> to find
+			the OID for your type, edit <code>pGOCaml.ml:name_of_type</code>
+			function to add the appropriate OID to type name mapping, and
+			then add two functions <code><em>type</em>_of_string</code>
+			and <code>string_of_<em>type</em></code> to perform the
+			translation to and from strings.</li>
 		</ul>
 
 		<h1>Hard problems</h1>
@@ -114,23 +196,26 @@
 		<p>It is fairly common to construct SQL statements from string fragments, as in this pseudocode example:</p>
 
 		<pre>
-<span style="color:blue">let</span> order_clause =
-    <span style="color:blue">match</span> key, reverse <span style="color:blue">with</span>
-    | `Author, false -&gt; &quot;author asc&quot;
-    | `Author, true -&gt; &quot;author desc&quot;
-    | `Title, false -&gt; &quot;title asc&quot;
-    | `Title, true -&gt; &quot;title desc&quot;
-<span style="color:blue">let</span> sql =
-&quot;select title, author from books order by &quot; ^ order_clause
+<span style="color:blue">let</span> order_clause = <span style="color:blue">match</span> key, reverse <span style="color:blue">with</span>
+    | `Author, false -&gt; <span style="color:purple">&quot;author asc&quot;</span>
+    | `Author, true -&gt; <span style="color:purple">&quot;author desc&quot;</span>
+    | `Title, false -&gt; <span style="color:purple">&quot;title asc&quot;</span>
+    | `Title, true -&gt; <span style="color:purple">&quot;title desc&quot;</span> <span style="color:blue">in</span>
+<span style="color:blue">let</span> sql = <span style="color:purple">&quot;select title, author from books order by &quot;</span> ^ order_clause
 		</pre>
 
-		<p>Such statement-building is not currently permitted by PG'OCaml, unless you ditch  the camlp4 extension and use the low-level, unsafe interface.  It would be nice to have some sort of &quot;fragment constructor&quot; operator to allow the above to be expressed in a type-safe way.  However because it is not possible to compile the fragments, it doesn't look like such a constructor could be written.  If anyone has any ideas about this, please contact us through the feedback form on this page.</p>
+		<p>Such statement-building is not currently permitted by PG'OCaml,
+		unless you ditch  the Camlp4 extension and use the low-level, unsafe
+		interface.  It would be nice to have some sort of &quot;fragment
+		constructor&quot; operator to allow the above to be expressed in a
+		type-safe way.	However because it is not possible to compile the
+		fragments, it doesn't look like such a constructor could be written.
+		If anyone has any ideas about this, please contact us.</p>
 
-		<h1>Links</h1>
+		<h1>Contact</h1>
 
-		<ul>
-			<li><a href="http://caml.inria.fr/">Caml language home</a></li>
-		</ul>
+		<p>You can get in touch with the developers by sending a message to <a
+		href="mailto:pgocaml-dev@lists.berlios.de">pgocaml-dev@lists.berlios.de</a>.</p>
 
 	<div id="footer">
 	</div>
