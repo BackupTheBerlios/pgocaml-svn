@@ -56,31 +56,38 @@
 
 		<h1>Download</h1>
 
-		<p>The latest version is 1.2.  Starting with this version, PG'OCaml comes in two varieties:</p>
+		<p>The latest version is 1.2.  Note that this release comes in two varieties:</p>
 
 		<dl>
 			<dt>pgocaml</dt>
 			<dd>
 			<p>This variant is the successor to the older versions of
 			PG'OCaml, developed by Richard W.M. Jones.  The code base is
-			unchanged and the API remains the same.  This is the variant
-			you want if you've used older versions of PG'OCaml and you
-			wish to upgrade.</p>
-			<p>Download <a href="pgocaml-1.2.tar.gz">pgocaml-1.2.tar.gz</a> (approx 40K)</p>
+			unchanged and the API remains the same.  If you have your own
+			patches to PG'OCaml, then for compatibility reasons this is
+			the code you want.  Note, however, that this branch may be
+			discontinued in future releases.</p>
+			<p>Download <a href="pgocaml-1.2.tar.gz">pgocaml-1.2.tar.gz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
+			<p>Download <a href="pgocaml-0.8.tar.gz">pgocaml-0.8.tar.gz</a> (If you are still using Ocaml &lt; 3.10)</p>
 			</dd>
 
 			<dt>pgocaml-monadic</dt>
 			<dd>
 			<p>This branch was contributed by <a
 			href="http://www.pps.jussieu.fr/~vouillon/">Jérôme
-			Vouillon</a>, and rewrites PG'OCaml's internals and API to work
-			in a monadic style.  Though flexible enough to be used with
+			Vouillon</a>, and refactors PG'OCaml's internals and API to
+			work in a monadic style.  Though flexible enough to be used with
 			any monad, the most obvious use of this branch is to integrate
 			PG'OCaml with an application that uses the light-weight threads
-			of the <a href="http://ocsigen.org/lwt">Lwt</a> library.  If you
-			are developing an application for the <a href="">Ocsigen</a>
-			web server, this is the variant you need.</p>
-			<p>Download <a href="pgocaml-monadic-1.2.tar.gz">pgocaml-monadic-1.2.tar.gz</a> (approx 40K)</p>
+			of the <a href="http://ocsigen.org/lwt">Lwt</a> library (a
+			common example are applications developed to run with the
+			<a href="http://www.ocsigen.org/">Ocsigen</a> web server).
+			Furthermore, it includes a compatibility interface that allows
+			you to write applications in a non-monadic fashion or to
+			link existing applications without requiring any changes to
+			their code.  This branch is likely to become the only branch
+			in future releases.</p>
+			<p>Download <a href="pgocaml-monadic-1.2.tar.gz">pgocaml-monadic-1.2.tar.gz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
 			</dd>
 		</dl>
 
@@ -102,7 +109,7 @@
 		<p>PG'OCaml has the following requirements: (note that all dependencies are available on Debian/Fedora/GODI)</p>
 
 		<ul>
-		<li><a href="http://caml.inria.fr/">Ocaml</a> (PG'OCaml requires Ocaml version 3.10.0 or higher)</li>
+		<li><a href="http://caml.inria.fr/">Ocaml</a></li>
 		<li><a href="http://www.ocaml-programming.de/packages/" class="external" title="http://www.ocaml-programming.de/packages/">Findlib</a></li>
 		<li><a href="http://ocaml-lib.sourceforge.net/" class="external" title="http://ocaml-lib.sourceforge.net/">ExtLib</a></li>
 		<li><a href="http://www.ocaml.info/home/ocaml_sources.html" class="external" title="http://www.ocaml.info/home/ocaml_sources.html">PCRE</a></li>
@@ -111,11 +118,11 @@
 		</ul>
 
 		<p>Before you attempt to build the source-code, take a look at
-		<code>Makefile.config</code> and check that it conforms to your system's
-		configuration.	To build issue <code>make depend</code> followed by
-		<code>make</code>.	You can perform a findlib installation with <code>make
-		findlib_install</code> and a system-wide installation with <code>make
-		install</code>.</p>
+		<code>Makefile.config</code> and check that it conforms to your
+		system's configuration.  To build issue <code>make depend</code>
+		followed by <code>make</code>. You can perform a findlib installation
+		with <code>make findlib_install</code> and a system-wide installation
+		with <code>make install</code>.</p>
 
 		<h1>Documentation</h1>
 
