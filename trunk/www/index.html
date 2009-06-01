@@ -71,8 +71,8 @@
 			patches to PG'OCaml, then for compatibility reasons this is
 			the code you want.  Note, however, that this branch may be
 			discontinued in future releases.</p>
-			<p>Download <a href="pgocaml-classic-1.2.tar.gz">pgocaml-classic-1.2.tar.gz</a> (For Ocaml &gt;= 3.10)</p>
-			<p>Download <a href="pgocaml-classic-0.8.tar.gz">pgocaml-classic-0.8.tar.gz</a> (If you are still using Ocaml &lt; 3.10)</p>
+			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-classic-1.2.tgz">pgocaml-classic-1.2.tgz</a> (For Ocaml &gt;= 3.10)</p>
+			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-classic-0.8.tgz">pgocaml-classic-0.8.tgz</a> (If you are still using Ocaml &lt; 3.10)</p>
 			</dd>
 
 			<dt>pgocaml</dt>
@@ -91,7 +91,7 @@
 			link existing applications without requiring any changes to
 			their code.  This branch is likely to become the only branch
 			in future releases.</p>
-			<p>Download <a href="pgocaml-1.2.tar.gz">pgocaml-1.2.tar.gz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
+			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-1.2.tgz">pgocaml-1.2.tgz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
 			</dd>
 		</dl>
 
@@ -194,12 +194,12 @@
 			can't be because there aren't any Kerberos client libraries
 			for OCaml.</li>
 
-			<li><code>crypt(3)</code> isn't implemented, because I'm
+			<li><code>crypt(3)</code> isn't implemented, because we're
 			not aware of any implementation of this function in OCaml.
 			Anyway, crypt is insecure.</li>
 
-			<li>Many data types are not implemented.  I am adding them
-			as I use them.	Adding a data type is pretty simple: look at
+			<li>Many data types are not implemented.  We are adding them
+			as the need arises. Adding a data type is pretty simple: look at
 			<code>/usr/include/postgresql/catalog/pg_type.h</code> to find
 			the OID for your type, edit <code>pGOCaml.ml:name_of_type</code>
 			function to add the appropriate OID to type name mapping, and
