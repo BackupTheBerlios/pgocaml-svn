@@ -1,6 +1,6 @@
 PROJECT  := three
 LINK_PKG := pgocaml
-COMP_PKG := pgocaml,pgocaml.statements
+COMP_PKG := pgocaml,pgocaml.syntax
 
 all: $(PROJECT)
 
