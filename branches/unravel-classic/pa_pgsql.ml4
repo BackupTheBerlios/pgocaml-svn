@@ -333,9 +333,9 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	  fun i result ->
 	    let field_type = result.PGOCaml.field_type in
 	    let modifier = result.PGOCaml.modifier in
-            let fn =
-              PGOCaml.name_of_type ~modifier field_type in
-            let fn = fn ^ "_of_string" in
+	    let fn =
+	      PGOCaml.name_of_type ~modifier field_type in
+	    let fn = fn ^ "_of_string" in
 	    let nullable =
 	      f_nullable_results ||
 	      match (result.PGOCaml.table, result.PGOCaml.column) with
