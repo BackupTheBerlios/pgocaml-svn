@@ -23,8 +23,16 @@ open Printf
 open ExtString
 open ExtList
 
+exception Bad_funret of string
+exception Bad_table_comment of string
+
 let nullable_name = "nullable"
 let unravel_name = "unravel"
+let column_comment_name = "column_comment"
+let table_comment_name = "table_comment"
+let type_name = "type"
+let class_name = "class"
+let funret_name = "funret"
 
 (* We need a database connection while compiling.  If people use the
  * override flags like "database=foo", then we may connect to several
@@ -70,13 +78,34 @@ let get_connection key =
       let unravel_query = "select typtype, typbasetype from pg_type where oid = $1" in
       PGOCaml.prepare dbh ~query:unravel_query ~name:unravel_name ();
 
+      (* Prepare the query returning the comment associated with a given table and column. *)
+      let column_comment_query = "select col_description (attrelid, attnum) from pg_attribute where attrelid=$1 and attnum=$2" in
+      PGOCaml.prepare dbh ~query:column_comment_query ~name:column_comment_name ();
+
+      (* Prepare the query returning the comment associated with a given OID. *)
+      let table_comment_query = "select obj_description ($1, $2)" in
+      PGOCaml.prepare dbh ~query:table_comment_query ~name:table_comment_name ();
+
+      (* Prepare the query returning the pg_type.OID associated with a type name. *)
+      let type_query = "select oid from pg_type where typname=$1" in
+      PGOCaml.prepare dbh ~query:type_query ~name:type_name ();
+
+      (* Prepare the query returning the pg_class.OID associated with the pg_type.OID. *)
+      let class_query = "select typrelid from pg_type where oid=$1" in
+      PGOCaml.prepare dbh ~query:class_query ~name:class_name ();
+
+      (* Prepare the query returning the pg_type.OID associated with a function's return type. *)
+      let funret_query = "select prorettype from pg_proc where proname = $1" in
+      PGOCaml.prepare dbh ~query:funret_query ~name:funret_name ();
+
       Hashtbl.add connections key dbh;
       dbh
 
 (* By using CREATE DOMAIN, the user may define types which are essentially aliases
    for existing types.  If the original type is not recognised by PG'OCaml, this
    functions recurses through the pg_type table to see if it happens to be an alias
-   for a type which we do know how to handle. *)
+   for a type which we do know how to handle.
+*)
 let unravel_type dbh orig_type =
   let rec unravel_type_aux ft =
     try
@@ -85,11 +114,91 @@ let unravel_type dbh orig_type =
       let params = [ Some (PGOCaml.string_of_oid ft) ] in
       let rows = PGOCaml.execute dbh ~name:unravel_name ~params () in
       match rows with
-        | [ [ Some typtype ; Some typbasetype ] ] when typtype = "d" ->
-          unravel_type_aux (PGOCaml.oid_of_string typbasetype)
-        | _ ->
-          raise exc
+	| [ [ Some typtype ; Some typbasetype ] ] when typtype = "d" ->
+	  unravel_type_aux (PGOCaml.oid_of_string typbasetype)
+	| _ ->
+	  raise exc
   in unravel_type_aux orig_type
+
+(* Checks attnotnull in the system table pg_attribute to determine whether the
+   the given column is nullable.  Note that this only works for real tables.
+*)
+let get_attnotnull dbh class_oid column =
+  let params = [ Some class_oid; Some column ] in
+  let rows = PGOCaml.execute dbh ~name:nullable_name ~params () in
+  let not_nullable = match rows with
+    | [ [ Some b ] ] -> PGOCaml.bool_of_string b
+    | _ -> false
+  in not not_nullable
+
+(* Returns the pg_class.oid associated with a given pg_type.oid.
+*)
+let get_class_oid dbh type_oid =
+  let params = [ Some type_oid ] in
+  let rows = PGOCaml.execute dbh ~name:class_name ~params () in
+  match rows with
+    | [ [ Some class_oid ] ] -> class_oid
+    | _ -> failwith ("Cannot get pg_class.oid associated with pg_type.oid=" ^ type_oid)
+
+(* Checks whether a 'pgoc_null' comment exists for the given column.
+   If so, we can directly set the column's nullability accordingly.
+*)
+let rec get_column_comment =
+  let rex = Pcre.regexp "\\bpgoc_null=(?<value>[t|f])" in
+  fun dbh table_oid column ->
+    let class_oid = match table_oid with
+      | `pg_class t -> t
+      | `pg_type t  -> get_class_oid dbh t in
+    let params = [ Some class_oid; Some column ] in
+    let rows = PGOCaml.execute dbh ~name:column_comment_name ~params () in
+    match rows with
+      | [ [ Some comment ] ] ->
+	let substr = Pcre.exec ~rex comment in
+	let value = Pcre.get_named_substring rex "value" substr in
+	(match value with
+	  | "f" -> false
+	  | _   -> true)  (* Whether explicitly "t" or otherwise, assume nullable. *)
+      | _ ->
+	get_table_comment dbh table_oid column
+
+(* Checks whether a 'pgoc_link' comment exists for the given table.
+   This comment tells us that nullability-wise, this table can be
+   treated as if it were an instance of the table specified in the
+   comment.
+*)
+and get_table_comment =
+  let rex = Pcre.regexp "\\bpgoc_link=(?<value>\\w+)" in
+  fun dbh table_oid column ->
+    let obj_oid, class_oid, catalog = match table_oid with
+      | `pg_class t -> t, t, "pg_class"
+      | `pg_type t  -> t, (get_class_oid dbh t), "pg_type" in
+    let params = [ Some obj_oid ; Some catalog ] in
+    let rows = PGOCaml.execute dbh ~name:table_comment_name ~params () in
+    match rows with
+      | [ [ Some comment ] ] ->
+	let substr = Pcre.exec ~rex comment in
+	let value = Pcre.get_named_substring rex "value" substr in
+	get_type_oid dbh value column
+      | _ ->
+	get_attnotnull dbh class_oid column
+
+(* Returns the pg_type.oid corresponding to a type's named.
+*)
+and get_type_oid dbh table column =
+  let params = [ Some table ] in
+  let rows = PGOCaml.execute dbh ~name:type_name ~params () in
+  match rows with
+    | [ [ Some type_oid ] ] -> get_column_comment dbh (`pg_type type_oid) column
+    | _ -> raise (Bad_table_comment table)
+
+(* Returns the pg_type.oid of return type of the given function.
+*)
+let get_funret dbh funret column =
+  let params = [ Some funret ] in
+  let rows = PGOCaml.execute dbh ~name:funret_name ~params () in
+  match rows with
+    | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
+    | _			 -> raise (Bad_funret funret)
 
 (* Return the list of numbers a <= i < b. *)
 let rec range a b =
@@ -101,6 +210,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
   (* Parse the flags. *)
   let f_execute = ref false in
   let f_nullable_results = ref false in
+  let f_funret = ref None in
   let key = ref { host = None; port = None; user = None;
 		  password = None; database = None;
 		  unix_domain_socket_dir = None } in
@@ -108,6 +218,8 @@ let pgsql_expand ?(flags = []) loc dbh query =
     function
     | "execute" -> f_execute := true
     | "nullable-results" -> f_nullable_results := true
+    | str when String.starts_with str "fun=" ->
+        f_funret := Some (String.sub str 4 (String.length str - 4))
     | str when String.starts_with str "host=" ->
 	let host = String.sub str 5 (String.length str - 5) in
 	key := { !key with host = Some host }
@@ -133,6 +245,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
   ) flags;
   let f_execute = !f_execute in
   let f_nullable_results = !f_nullable_results in
+  let f_funret = !f_funret in
   let key = !key in
 
   (* Connect, if necessary, to the database. *)
@@ -338,24 +451,14 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	    let fn =
 	      PGOCaml.name_of_type ~modifier field_type in
 	    let fn = fn ^ "_of_string" in
-	    let nullable =
-	      f_nullable_results ||
-	      match (result.PGOCaml.table, result.PGOCaml.column) with
-	      | Some table, Some column ->
-		  (* Find out whether the column is nullable from the
-		   * database pg_attribute table.
-		   *)
-		  let params =
-		    [ Some (PGOCaml.string_of_oid table);
-		      Some (PGOCaml.string_of_int column) ] in
-		  let rows =
-		    PGOCaml.execute my_dbh ~name:nullable_name ~params () in
-		  let not_nullable =
-		    match rows with
-		    | [ [ Some b ] ] -> PGOCaml.bool_of_string b
-		    | _ -> false in
-		  not not_nullable
-	      | _ -> true (* Assume it could be nullable. *) in
+	    let nullable = f_nullable_results || match f_funret with
+	      | Some f -> get_funret my_dbh f (string_of_int (i+1))
+	      | None ->
+		match (result.PGOCaml.table, result.PGOCaml.column) with
+		  | Some table, Some column ->
+		    get_column_comment my_dbh (`pg_class (PGOCaml.string_of_oid table)) (string_of_int column)
+		  | _ ->
+		    true in  (* Assume it could be nullable. *)
 	    let col = <:expr< $lid:"c" ^ string_of_int i$ >> in
 	    if nullable then
 	      <:expr< Option.map PGOCaml.$lid:fn$ $col$ >>
