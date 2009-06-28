@@ -200,7 +200,8 @@ let get_funret dbh funret column =
     | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
     | _			 -> raise (Bad_funret funret)
 
-(* Return the list of numbers a <= i < b. *)
+(* Return the list of numbers a <= i < b.
+*)
 let rec range a b =
   if a < b then a :: range (a+1) b else [];;
 
@@ -219,7 +220,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
     | "execute" -> f_execute := true
     | "nullable-results" -> f_nullable_results := true
     | str when String.starts_with str "fun=" ->
-        f_funret := Some (String.sub str 4 (String.length str - 4))
+	f_funret := Some (String.sub str 4 (String.length str - 4))
     | str when String.starts_with str "host=" ->
 	let host = String.sub str 5 (String.length str - 5) in
 	key := { !key with host = Some host }
