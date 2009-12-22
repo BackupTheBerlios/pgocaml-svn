@@ -60,7 +60,9 @@
 
 		<h1>Download</h1>
 
-		<p>The latest version is 1.3.  Note that this release comes in two varieties:</p>
+		<p>The latest version is 1.4.  Note that PG'OCaml comes in two varieties, described below.
+		Most users should pick the <code>pgocaml</code> variant, since it is the only one actively
+		developed.</p>
 
 		<dl>
 			<dt>pgocaml-classic</dt>
@@ -69,8 +71,9 @@
 			PG'OCaml, developed by Richard W.M. Jones.  The code base is
 			unchanged and the API remains the same.  If you have your own
 			patches to PG'OCaml, then for compatibility reasons this is
-			the code you want.  Note, however, that this branch may be
-			discontinued in future releases.</p>
+			the code you want.  Note, however, that this branch is no
+			longer updated with new features, and no version higher than
+			1.3 is available.</p>
 			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-classic-1.3.tgz">pgocaml-classic-1.3.tgz</a> (For Ocaml &gt;= 3.10)</p>
 			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-classic-0.8.tgz">pgocaml-classic-0.8.tgz</a> (If you are still using Ocaml &lt; 3.10)</p>
 			</dd>
@@ -80,7 +83,8 @@
 			<p>This branch was contributed by <a
 			href="http://www.pps.jussieu.fr/~vouillon/">Jérôme
 			Vouillon</a>, and refactors PG'OCaml's internals and API to
-			work in a monadic style.  Though flexible enough to be used with
+			work in a monadic style (a compatibility mode with the old
+			API is also available).  Though flexible enough to be used with
 			any monad, the most obvious use of this branch is to integrate
 			PG'OCaml with an application that uses the light-weight threads
 			of the <a href="http://ocsigen.org/lwt">Lwt</a> library (a
@@ -89,9 +93,9 @@
 			Furthermore, it includes a compatibility interface that allows
 			you to write applications in a non-monadic fashion or to
 			link existing applications without requiring any changes to
-			their code.  This branch is likely to become the only branch
-			in future releases.</p>
-			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-1.3.tgz">pgocaml-1.3.tgz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
+			their code.  This branch is the only one actively developed,
+			and the one recommended to all users.</p>
+			<p>Download <a href="http://prdownload.berlios.de/pgocaml/pgocaml-1.4.tgz">pgocaml-1.4.tgz</a> (Note: it requires Ocaml &gt;= 3.10)</p>
 			</dd>
 		</dl>
 
@@ -108,9 +112,27 @@
 		the Ocaml linking exception.  Please see the file <code>COPYING.LIB</code>
 		for full license.</p>
 
+		<h1>Package availability in Linux distributions</h1>
+
+		<p>There are binary packages of PG'OCaml available for some Linux distributions.  This is the easiest way of
+		installing the library.  Check the following list for your distro: (please let us know of others)</p>
+
+		<ul>
+			<li>
+				<b>Debian:</b>
+				<a href="http://packages.qa.debian.org/p/pgocaml.html">package page at the Debian tracking system</a>
+			</li>
+
+			<li>
+				<b>Fedora:</b>
+				<a href="https://admin.fedoraproject.org/pkgdb/packages/name/ocaml-pgocaml">package page at the Fedora package database</a>
+			</li>
+		</ul>
+
 		<h1>Building instructions</h1>
 
-		<p>PG'OCaml has the following requirements: (note that all dependencies are available on Debian/Fedora/GODI)</p>
+		<p>If there are no binary packages available for your distro or you prefer to  compile it yourself anyway,
+		note that PG'OCaml has the following requirements: (all dependencies are available on Debian/Fedora/GODI)</p>
 
 		<ul>
 		<li><a href="http://caml.inria.fr/" title="http://caml.inria.fr/">Ocaml</a></li>
