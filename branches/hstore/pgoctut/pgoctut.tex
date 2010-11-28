@@ -1,0 +1,753 @@
+%% PG'OCaml tutorial.
+%% Dario Teixeira - August 2007.
+%% (dario.teixeira@yahoo.com)
+
+\documentclass[11pt]{article}
+
+\usepackage{geometry}				% To define page size, margins, etc.
+\usepackage[pdftex]{hyperref}			% For hyper-references in the generated PDF.
+\usepackage[hyperref]{xcolor}			% To use colours in the document.
+\usepackage[pdftex]{graphicx}			% To import graphics.
+\usepackage{epstopdf}				% For on-the-fly conversion of eps to pdf.
+\usepackage[british]{babel}			% For British English hyphenation patterns.
+\usepackage[latin1]{inputenc}			% For Latin1 (ISO-8859-1) input encoding.
+\usepackage[T1]{fontenc}			% For T1 character encoding.
+\usepackage{textcomp}				% For T1 character encoding.
+\usepackage{ae}					% For T1 encoding using Type 1 fonts.
+\usepackage{mathptmx}				% For Type 1 "Times Roman" serif text and math.
+\usepackage[scaled=0.92]{helvet}		% For Type 1 "Helvetica" sans serif text.
+\usepackage{courier}				% For Type 1 "Courier" monospaced text.
+\usepackage{enumerate}				% For configurable enumerate environments.
+\usepackage{xspace}				% For automatic handling of spaces after macros.
+\usepackage[titles]{tocloft}			% For Table of Contents customisation.
+\usepackage{booktabs}				% For book quality lines in tables.
+\usepackage{fancyvrb}				% For fancy verbatim environments.
+\usepackage{subfig}				% For subfigures.
+\usepackage[stable]{footmisc}			% For stable footnotes.
+\usepackage{float}				% For extra control over floats.
+\usepackage{titlesec}				% To configure sections headings.
+\usepackage[section,nottoc]{tocbibind}			% To put the Bibliography in the TOC.
+\usepackage{xmpincl}				% To include Creative Commons metadata in XMP format.
+
+%%
+%% Macros for entities referred in the document.
+%%
+
+\newcommand{\ocaml}{\textsc{ocaml}\xspace}
+\newcommand{\ocamlfind}{\textsc{ocamlfind}\xspace}
+\newcommand{\postgresql}{\textsc{postgresql}\xspace}
+\newcommand{\sql}{\textsc{sql}\xspace}
+\newcommand{\pgocaml}{\textsc{pg'ocaml}\xspace}
+\newcommand{\calendar}{\textsc{calendar}\xspace}
+\newcommand{\godi}{\textsc{godi}\xspace}
+\newcommand{\unix}{\textsc{unix}\xspace}
+\newcommand{\debian}{\textsc{debian}\xspace}
+\newcommand{\camlp}{\textsc{camlp}{\scriptsize 4}\xspace}
+\newcommand{\jonesemail}{rich@annexia.org}
+\newcommand{\jones}{\href{mailto:\jonesemail}{Richard W. M. Jones} (\href{mailto:\jonesemail}{\jonesemail})}
+
+%%
+%% Definition of the colours used in the document.
+%%
+
+\definecolor{codefront}{rgb}{0,0,0}
+\definecolor{codeback}{rgb}{1,1,0.8}
+\definecolor{codeframe}{rgb}{0,0,0}
+\definecolor{Brick}{HTML}{7B0C00}
+\definecolor{RoyalBlue}{cmyk}{1,0.50,0,0}
+
+%%
+%% Code box configuration.
+%%
+
+\setlength{\fboxsep}{1em}
+\setlength{\fboxrule}{1bp}
+\newcommand{\displaycodefile}[1]{\fcolorbox{codeframe}{codeback}{\BVerbatimInput[numbers=right,formatcom=\color{codefront},fontsize=\footnotesize]{#1}}}
+\newcommand{\displaycodesave}[1]{\fcolorbox{codeframe}{codeback}{\BUseVerbatim[numbers=right,formatcom=\color{codefront},fontsize=\footnotesize]{#1}}}
+
+%%
+%% Table commands.
+%%
+
+\newcommand{\rowhead}[1]{{\large\rmfamily\textbf{#1}}}
+\newcommand{\rowsubhead}[1]{\addlinespace[1ex]\multicolumn{2}{c}{\rmfamily\underline{\emph{#1}}}\\\addlinespace[1ex]}
+\newcommand{\pdots}{{\tiny$\cdots$}}
+\newcommand{\doublecell}[2]{\parbox{15em}{\makebox[15em][l]{#1}\newline\makebox[15em][l]{#2}}}
+\newcommand{\doublehead}[2]{\doublecell{\textbf{#1}}{\textbf{(#2)}}}
+\newcommand{\doublebody}[2]{\small\doublecell{\texttt{#1}}{\textsc{(#2)}}}
+
+%%
+%% TOC configuration.
+%%
+
+\setlength{\cftbeforesecskip}{0.1ex}
+\setlength{\cftbeforesubsecskip}{0.1ex}
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+%%
+%% Configure captions.
+%%
+
+\captionsetup{font=small,labelfont=bf,margin=2em}
+\captionsetup[subfloat]{format=hang,font=small,labelfont=bf,margin=1em}
+
+%%
+%% Configure titles.
+%%
+
+\titleformat{name=\section}{\normalfont\rmfamily\Large\bfseries\color{Brick}}{\thesection.}{1em}{}
+\titleformat{name=\section,numberless}{\normalfont\rmfamily\Large\bfseries\color{Brick}}{}{0em}{}
+\titleformat{name=\subsection}{\normalfont\rmfamily\Large\bfseries\color{Brick}}{\thesubsection.}{1em}{}
+\titleformat{name=\subsubsection}{\normalfont\rmfamily\large\bfseries\color{Brick}}{\thesubsubsection.}{1em}{}
+
+%%
+%% Configuration of paper geometry.
+%%
+
+\geometry{dvipdfm,a4paper,centering,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm,nomarginpar}
+
+%%
+%% Hyperlink configuration.
+%%
+
+\hypersetup{%
+	pdftitle={A Brief Introduction to PG'OCaml},
+	pdfauthor={Dario Teixeira},
+	pdfsubject={PG'OCaml},
+	pdfkeywords={PG'OCaml, OCaml, Postgresql},
+	plainpages=false,
+	pdfpagelabels,
+	hyperindex,
+	colorlinks=true}
+
+\hypersetup{linkcolor=RoyalBlue,urlcolor=RoyalBlue}
+
+%%
+%% Creative Commons metadata.
+%%
+
+\includexmp{license}
+
+%%
+%% Main.
+%%
+
+\begin{document}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\title{A Brief Introduction to \pgocaml\footnotemark[1]}
+\author{Dario Teixeira\\\small(\href{mailto:dario.teixeira@yahoo.com}{dario.teixeira@yahoo.com})}
+\date{Version 0.94\\\today}
+\maketitle
+
+\footnotetext[1]{%
+\begin{minipage}[t]{0.77\textwidth}
+This work is licensed under a \href{http://creativecommons.org/licenses/by-sa/3.0/}%
+{Creative Commons Attribution-Share Alike 3.0 License}.\newline The latest version of this document
+can always be found at the following address:\newline\url{http://dario.dse.nl/projects/pgoctut/}
+\end{minipage}\hfill%
+\raisebox{-3.4ex}[\depth][\height]{\includegraphics[height=5ex]{cc-srr}}}
+
+\renewcommand{\thefootnote}{\arabic{footnote}}
+
+\tableofcontents
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:intro}
+
+\pgocaml, by \jones, provides an interface to \postgresql databases for \ocaml
+applications \cite{pgocaml,postgresql,ocaml}.  It uses \camlp to extend the
+\ocaml syntax, enabling one to directly embed \sql statements inside the \ocaml
+code \cite{camlp}.  Moreover, it uses the \emph{describe} feature of \postgresql to
+obtain type information about the database.  This allows \pgocaml to check \textbf{at
+compile-time} if the programme is indeed consistent with the database structure.
+This type-safe database access is the primary advantage that \pgocaml has over other
+\postgresql bindings for \ocaml.
+
+Unfortunately, \pgocaml is rather lacking on the documentation front.  This document
+aims to fill that gap, by providing an overview of the capabilities of the library,
+usage examples, and solutions to potential pitfalls.  Moreover, it also addresses
+the installation of \pgocaml, how to compile programmes that make use of the library,
+and the correspondence between \postgresql data types and their \ocaml counterparts.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Installation}
+\label{sec:installation}
+
+You are strongly advised to use \ocamlfind to aid in the management of \ocaml packages.
+The instructions on this document will therefore assume that you are using \ocamlfind,
+and that you will have \pgocaml installed in a manner consistent with it.  Fortunately,
+the makefile included with the source code of \pgocaml already has provisions for
+adding \pgocaml to \ocamlfind's repository.  After you have built the \pgocaml library
+(typically with \texttt{make all}), simply run \texttt{make findlib\_install} to perform
+the installation.  This should create a \texttt{pgocaml} directory under the appropriate
+branch of \ocamlfind's repository (normally under a directory named \texttt{site-lib}
+if you are using \godi).  In this directory you will find the compiled \pgocaml
+libraries, plus the \texttt{META} file with special instructions for \ocamlfind.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Compilation of projects using \pgocaml}
+\label{makefile}
+
+Figure~\ref{fig:makefile} lists a basic makefile for compiling a project \emph{test}
+that makes use of \pgocaml.  Note that the \camlp syntax extension used by the \pgocaml
+can be handled in a fairly straightforward manner thanks to \ocamlfind.  Note also
+that the sub-package \texttt{pgocaml.syntax} must be used during the compilation
+stage of code that makes use of the \camlp syntax extensions.  This sub-package is of
+course unnecessary during the linking stage.
+
+\begin{figure}[!ht]
+\centering
+\displaycodefile{examples/Makefile/Makefile}
+\caption{A simple Makefile to compile \pgocaml projects.  Note that \ocamlfind must
+be installed in the system.  In addition, the \camlp preprocessor is invoked
+during the compilation stage.}
+\label{fig:makefile}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Basic usage}
+\label{sec:basics}
+
+Figure~\ref{fig:one} lists a very simple programme that uses \pgocaml.  In this section
+we shall dissect this programme function by function, thereby introducing the basic
+principles behind \pgocaml.  Note that in order for the programme to compile and run,
+the \postgresql \emph{Postmaster}\footnote{The \emph{Postmaster} is the frontend
+process that manages connections to the \postgresql databases.} must be running
+on the local host, and there must be a database with the same name as your user's
+defined within the system (run \texttt{createdb `whoami`} if that is not the case).
+The reasons behind this should be made clear before this section is through.
+
+From a bird's eye perspective, what stands out immediately is the embedding of \sql
+statements inside the \ocaml code.  \pgocaml can deal with pretty much all valid \sql
+statements, including sub-selects.  Though not quite as conspicuous, a more careful
+look at the code will show that \pgocaml must somehow be extending the type-safety
+of \ocaml to the embedded statements.  Note that the \texttt{users} table is declared
+to have three columns, respectively of \sql types \texttt{serial}, \texttt{text}, and
+\texttt{int} (all of them \texttt{not null}).  If one were to run \texttt{ocamlc -i} on
+this code, the signature of the \texttt{print\_user} function would equal \texttt{val
+print\_user : int32 * string * int32 -> unit}, indicating that the system was able to
+infer the correct \ocaml types that correspond to the \postgresql types declared in
+the embedded statements (see Section~\ref{sec:types} for a more thorough description
+of the correspondence between \postgresql and \ocaml data types).
+
+\begin{figure}[!ht]
+\centering
+\displaycodefile{examples/one/one.ml}
+\caption{A simple programme using \pgocaml.  Note the syntax extension
+enabling the embedding of \sql statements inside \ocaml code.}
+\label{fig:one}
+\end{figure}
+
+As for the syntax extension, it takes the form of the macro \texttt{PGSQL}, followed
+by the database handle between parentheses, an optional sequence of strings with the
+statement flags, and a final, mandatory string with the actual \sql statement.  You can
+see the extension in use in functions \texttt{create\_table}, \texttt{insert\_user},
+and \texttt{get\_users}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Statement flags and environment variables}
+\label{sec:flags}
+
+The sage reader will have come to the conclusion that in order for the compiler to
+verify the correct match between the database structure and the types used in the
+programme, \pgocaml must have access to the database \textbf{at compile-time}.  That is
+indeed true.  Moreover, it follows that there must be at least one mechanism that allows
+the programmer to inform \pgocaml where the relevant \postgresql \emph{Postmaster} is
+located, and how the target database should be accessed.  In fact, \pgocaml provides
+not one, but two different and alternative mechanisms for this purpose: environment
+variables, and statement flags.
+
+Environment variables are set via the normal mechanism available in the operating
+system.  Due to their global nature, they apply to \textbf{all} \pgocaml statements
+in the programme.  Moreover, they can be used both at compile-time and runtime.
+As for statement flags, they take the form of string constants placed before the \sql
+statement proper.  They are therefore valid only for that statement. In the example
+shown in Figure~\ref{fig:one}, only one statement flag is used: the \texttt{"execute"}
+placed before the \sql statement in function \texttt{create\_table}.
+
+Table~\ref{tab:flags} lists all statement flags and associated environment variables.
+A statement flag will override the corresponding environment variable, and lacking
+both, the built-in defaults are used.  You can now understand why the example in
+Figure~\ref{fig:one} requires that a database with your user name exists in the local
+host: since we have not declared neither host, nor user, nor database, the default is to
+use the local machine, your user name, and a database named after the user, respectively.
+
+\begin{table}[!ht]
+\centering
+\renewcommand{\arraystretch}{2}
+\begin{tabular}{lp{24em}}
+\toprule
+\doublehead{Statement flag}{Environment variable} & \textbf{Observations}\\
+\midrule
+\doublebody{host=\pdots}{pghost} &
+
+If the host is not specified, the connection will default to the localhost, using a
+\unix domain socket for communication.\\
+
+\doublebody{port=\pdots}{pgport} &
+
+If the port number is not specified, the default is 5432.  Note that the port number
+is only used if the host is specified.\\
+
+\doublebody{user=\pdots}{pguser} &
+
+If no user name is specified, the default is to use the current \unix user name.
+If the latter is also unavailable, \texttt{postgres} is tried.\\
+
+\doublebody{password=\pdots}{pgpassword} &
+
+The password used to authenticate the user, if the \postgresql configuration so requires.\\
+
+\doublebody{database=\pdots}{pgdatabase} &
+
+The name of the database we wish to connect to.  If not specified, a database with
+the same name as the user is tried.\\
+
+\doublebody{unix\_domain\_socket\_dir=\pdots}{unix\_domain\_socket\_dir} &
+
+The directory where the \unix domain socket can be located.  In a \debian system,
+for instance, this directory is typically \texttt{/var/run/postgresql/}.\\
+
+\doublebody{execute}{n/a} &
+
+Tells \pgocaml that the statement should be executed immediately (at compile-time). This
+flag only makes sense on a statement by statement basis, and therefore has no equivalent
+environment variable.\\
+
+\doublebody{nullable-results}{n/a} &
+
+Disables the \emph{nullability} heuristics for all columns.  For details consult the
+\texttt{BUGS.txt} file included with \pgocaml.\\
+
+\bottomrule
+\end{tabular}
+\renewcommand{\arraystretch}{1}
+\caption{Statement flags and environment variables.  Note that statement flags are only
+valid at compile-time and on a statement by statement basis.  Environment variables, on
+the other hand, are valid both at compile-time and runtime; moreover, they apply globally,
+to all statements.}
+\label{tab:flags}
+\end{table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{The connection handle}
+\label{sec:connect}
+
+At runtime, before any \sql statements can be issued, you must create a
+connection handler to the \postgresql database.  This handler is created by the
+\texttt{PGOCaml.connect} function, whose signature is shown in Figure~\ref{fig:connect}.
+Note that the optional parameters for this function mirror those available via the
+environment variables.  In the code shown in Figure~\ref{fig:one}, the connection handle
+\texttt{dbh} is created by the first statement of the top-level anonymous let-binding.
+
+\begin{SaveVerbatim}{code:connect}
+val connect :
+	?host:string ->
+	?port:int ->
+	?user:string ->
+	?password:string ->
+	?database:string ->
+	?unix_domain_socket_dir:string ->
+	unit -> 'a t
+\end{SaveVerbatim}
+
+\begin{figure}[!ht]
+\centering
+\displaycodesave{code:connect}
+\caption{The signature of function \texttt{PGOCaml.connect},
+used to create a database connection handle.}
+\label{fig:connect}
+\end{figure}
+
+At this point, the reader may be wondering if there is not redundancy between the
+parameters of the \texttt{connect} function and the already discussed statement
+flags and environment variables.  Partly yes, though there are still good reasons
+why \texttt{connect} accepts these parameters as well.  First, bear in mind that the
+statement flags are valid only at compile-time, while the parameters to \texttt{connect}
+are used only at runtime.  Second, though environment variables can be used both at
+compile and runtime, they require an action by the user to set them up.  By passing
+the connection parameters directly in the \texttt{connect} function, the programme
+is able to run correctly even if the user forgets to set the environment variables.
+Moreover, the parameters to \texttt{connect} trump environment variable definitions.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Parameters and return values of \sql statements}
+\label{sec:param}
+
+As shown in function \texttt{insert\_user}, the basic notation for passing an \ocaml
+value to an \sql statement is to simply prefix the name of the value with the dollar
+sign \texttt{\$} (optional and array types require a different notation, discussed
+in Section~\ref{sec:optional}.
+
+As for the return type of the embedded \sql statements, they match fairly closely
+the natural types one would expect.  Statements that return no data (such as the
+\texttt{INSERT} statement in function \texttt{insert\_user}) have type \texttt{unit}.
+Likewise, \texttt{SELECT} statements (such as the one in function \texttt{get\_users})
+will typically return a list of tuples.
+
+If in doubt about the actual return type of a more complex statement (such as one
+involving \sql aggregate functions), then \texttt{ocamlc -i} is your friend.  Consider,
+for example, that we were to add to the programme the function \texttt{get\_aggregates}
+listed in Figure~\ref{fig:aggregates}.  It is far from obvious what the actual
+signature of this function is.  Thankfully, the figure shows also the signature
+produced by \texttt{ocamlc -i}, telling us that the function returns a list (typically
+composed of a single element) of tuples.  The tuples are formed by two optional types:
+an \texttt{int64} corresponding to the number of rows in the table \footnote{In fact,
+there is no limit to the number of rows that a \postgresql database can hold.  It just
+so happens that \texttt{int64} is the largest integer type that \ocaml can handle.},
+and a float corresponding to the average of the user ages.
+
+\begin{SaveVerbatim}{code:aggregates}
+let get_aggregates dbh =
+    PGSQL(dbh) "SELECT COUNT (id), AVG (age) FROM users"
+
+val get_aggregates :
+    (string, bool) Hashtbl.t PGOCaml.t -> (int64 option * float option) list
+\end{SaveVerbatim}
+
+\begin{figure}[!ht]
+\centering
+\displaycodesave{code:aggregates}
+\caption{A new function \texttt{get\_aggregates} that returns the number of rows in the \texttt{users}
+table and the average of the \texttt{age} column.  Note that the signature of this function is far from
+obvious, so \texttt{ocamlc -i} can be of help.}
+\label{fig:aggregates}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Data types}
+\label{sec:types}
+
+The translation between \postgresql and \ocaml types is not as straightforward as one
+might think.  Consider for example that due to requirements of the garbage collector,
+the \texttt{int} type in \ocaml is actually 31 bits long, instead of the 32 bits
+integers commonly found in other languages and in \postgresql's own \texttt{int} type.
+
+\pgocaml chooses safety and correctness over potential performance gains.
+Therefore, \postgresql's \texttt{int} type is mapped into \ocaml's \texttt{int32}.
+Table~\ref{tab:types} lists the correspondence between all the \postgresql types
+currently supported by \pgocaml and their \ocaml counterparts.  Note in particular
+that all character types are mapped onto \ocaml's \texttt{string}, and that thanks to
+the facilities offered by the \calendar library \cite{calendar}, it is also possible
+to do a type-safe and semantically correct mapping of the time and date types.
+
+\begin{table}[!ht]
+\begin{minipage}[t]{0.99\textwidth}
+\centering
+\ttfamily
+\begin{tabular}{ll}
+\toprule
+\rowhead{\postgresql} & \rowhead{\ocaml}\\
+\midrule
+
+\rowsubhead{Numeric types}
+
+int2, smallint			& PGOCaml.int16
+				\footnote{\texttt{PGOCaml.int16} is defined as \texttt{int}.}\\
+int4, int, integer 		& int32\\
+serial				& int32\\
+int8, bigint			& int64\\
+decimal, numeric		& float\\
+float8, float, double precision	& float\\
+float4, real			& float\\
+
+\midrule
+\rowsubhead{Character types}
+
+char, character			& string\\
+varchar, character varying	& string\\
+text				& string\\
+
+\midrule
+\rowsubhead{Time and date types}
+
+date				& Date.t\\
+interval			& Calendar.Period.t\\
+time				& Time.t\\
+timestamp			& Calendar.t\\
+timestamptz			& PGOCaml.timestamptz
+				\footnote{\texttt{PGOCaml.timestamptz} is defined as \texttt{Calendar.t * Time\_Zone.t}.}\\
+
+\midrule
+\rowsubhead{Blob types}
+
+bytea				& PGOCaml.bytea
+				\footnote{\texttt{PGOCaml.bytea} is defined as \texttt{string}.}\\
+
+\midrule
+\rowsubhead{Logical types}
+
+bool, boolean			& bool\\
+
+\midrule
+\rowsubhead{Array types}
+
+int[]				& PGOCaml.int32\_array
+				\footnote{\texttt{PGOCaml.int32\_array} is defined as \texttt{int32 array}.}\\
+
+\bottomrule
+\end{tabular}
+\rmfamily
+\caption{Correspondence between \postgresql types and their \ocaml counterparts.  Note that most integer
+types are mapped onto either \texttt{int32} or \texttt{int64}, to avoid overflowing the 31 bits of \ocaml's
+native \texttt{int} type.  As for character types, they are all mapped onto \ocaml \texttt{string}.
+At last, note that temporal types are mapped onto the facilities offered by the \calendar library.}
+\label{tab:types}
+\end{minipage}\hfill%
+\end{table}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Handling optional types}
+\label{sec:optional}
+
+\sql features the possibility of declaring certain columns as \texttt{NULL} (this is
+in fact the default if the column is not explicitly declared \texttt{NOT NULL}).  These
+\texttt{NULL} values in \sql represent essentially the same concept as the \texttt{None}
+in \ocaml's optional types.  Therefore, it should not come as a surprise that \pgocaml
+uses optional types to represent \sql columns that accept \texttt{NULL} values.
+
+\begin{figure}[!ht]
+\centering
+\displaycodefile{examples/two/two.ml}
+\caption{An extended example, making use of optional types.  Note that because the \postgresql
+type of column \texttt{age} now accepts \texttt{NULL} values, its corresponding \ocaml type has
+been changed to \texttt{int32 option}.}
+\label{fig:two}
+\end{figure}
+
+Figure~\ref{fig:two} lists a modified version of our original programme.  Note that we
+have made \texttt{NULL} values acceptable for the column \texttt{age}.  As a consequence,
+the associated \ocaml type is now \texttt{int32 option}.  You will notice that function
+\texttt{print\_user} has some extra code to handle for the possibility of no age
+being defined.  Note also that when referencing an optional type inside an embedded
+statement, the notation \texttt{\$?} should be used instead of the plain \texttt{\$}.
+
+\subsection{Array types and list expressions}
+\label{sec:optional}
+
+Figure~\ref{fig:three} lists further modifications to our original programme.
+Besides the changes incorporated in Figure~\ref{fig:two}, the reader will notice that
+we added a new column to the table, of type \texttt{int[]}.  \postgresql supports
+arrays are column types, and \pgocaml also has limited support for them.  Note also
+that we added two new functions, \texttt{get\_2\_users} and \texttt{get\_n\_users},
+both using list expressions.
+
+\begin{figure}[!ht]
+\centering
+\displaycodefile{examples/three/three.ml}
+\caption{An example using array types and list expressions.  While the former
+are referred to just like any other \postgresql type, the latter require the
+use of the special \texttt{\$@} notation if used programatically, as illustrated
+by function \texttt{get\_n\_users} (note that this function will cause a runtime
+exception if the list \texttt{user\_ids} happens to be empty; a workaround is shown
+in Figure~\ref{fig:emptylist}).}
+\label{fig:three}
+\end{figure}
+
+It is important that array types and list expressions are not confused.  The former
+are used in \pgocaml just like any other type; note that we use the basic \texttt{\$}
+notation to refer to column \texttt{votes}.  As for list expressions (the \texttt{(1, 2)}
+used in function \texttt{get\_2\_users}, for example) they require a special notation
+if they are created programatically.  Function \texttt{get\_n\_users} illustrates this
+aspect: note the use of the \texttt{\$@} notation.
+
+While certainly useful, the programatic use of list expressions has a number of caveats
+that the user should be aware of.  These stem from shortcomings in the \sql standard,
+bugs in older versions (pre 8.x) of \postgresql, and limitations inherent to the way
+\pgocaml prepares \sql statements.  The user is strongly advised to take heed of these
+warnings:
+
+\begin{enumerate}[a)]
+
+\item
+
+Due to an unfortunate lack of foresight, the \sql standard does not accept empty list
+expressions.  Therefore, if we were to replace the \texttt{(1, 2)} list in function
+\texttt{get\_2\_users} with the empty list \texttt{()}, compilation would fail with a
+syntax error.  More worryingly, the programatic use of list expressions (as exemplified
+by function \texttt{get\_n\_users}) brings forth the very real danger of an empty list
+being passed to an \sql statement, causing a syntax error complaint from the database
+server and consequent exception at runtime.  You are therefore strongly advised to guard
+against this possibility by checking beforehand if the list is empty.  A revised, correct
+version of function \texttt{get\_n\_users} is shown in Figure~\ref{fig:emptylist}.
+
+
+
+\begin{SaveVerbatim}{code:emptylist}
+let get_n_users dbh user_ids =
+    match user_ids with
+    | []    -> []
+    | _     -> PGSQL(dbh) "SELECT id, name, age FROM users WHERE id IN $@user_ids"
+\end{SaveVerbatim}
+
+\begin{figure}[!ht]
+\centering
+\displaycodesave{code:emptylist}
+\caption{A revised version of the function \texttt{get\_n\_users}.  Unfortunately, the \sql
+standard does not accept empty list expressions.  Therefore, when using the \texttt{\$@}
+notation to programatically insert a list expression into a statement, the user is strongly
+advised to check against the empty case to avoid a runtime exception.}
+\label{fig:emptylist}
+\end{figure}
+
+\item
+
+Particularly in older versions of \postgresql (before the 8.x series), large list
+expressions could cause serious performance and/or crashes in the database server
+\cite{listoops}.  You are therefore advised to upgrade to newer versions of \postgresql
+or to be careful with the size of the list expressions used programatically.
+
+\item
+
+Due to the way \postgresql prepared statements work, \pgocaml is forced to make
+a prepared statement for each length of a programatic list expression used.
+Therefore, if we were to invoke function \texttt{get\_n\_users} successively with
+lists \texttt{[10\_l]}, \texttt{[10\_l; 11\_l]}, and \texttt{[10\_l; 11\_l; 12\_l]},
+\pgocaml would have to prepare and store each of the following statements:
+
+\begin{SaveVerbatim}{code:prepared}
+SELECT id, name, age FROM users WHERE id IN ($1)
+SELECT id, name, age FROM users WHERE id IN ($1, $2)
+SELECT id, name, age FROM users WHERE id IN ($1, $2, $3)
+\end{SaveVerbatim}
+
+\begin{center}
+\displaycodesave{code:prepared}
+\end{center}
+
+The astute observer will have noticed that if the size of the list is potentially very
+large, and if successive invocations of the function happen for varying sizes of the
+list, then the amount of memory spent on the prepared statements can easily grow out
+of hand.  There is no easy workaround this issue, so the user should keep this problem
+in mind.
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\clearpage
+\section{Frequently Asked Questions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Are there provisions against \sql injections?}
+
+Yes.  Internally, \pgocaml uses so-called \emph{prepared statements} to operate on
+the database.  What this means is that a statement is first prepared with placeholders
+instead of the actual parameters.  The database then parses and creates a plan for the
+statement.  It is only after this that the actual parameters are fed to the database.
+Not only does this procedure prevent the user to inject \sql statements, but it also
+saves the database engine the effort of parsing and planning the same statement each
+time it is issued.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Can I dynamically construct \sql statements?}
+
+No.  Bear in mind that \pgocaml must have access to the statement at compile-time.
+Therefore, you cannot build a statement dynamically from smaller pieces.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Can \texttt{select} statements return a list of records instead of tuples?}
+
+This is not possible at the moment.  If you need to convert the list of tuples returned
+by a \pgocaml statement, you need to run \texttt{List.map} on the returned list,
+and use a constructor function to convert a tuple into a record.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Is \pgocaml thread-safe?}
+
+Yes, with some reservations.  Internally, each database connection handle (the type
+returned by the function \texttt{PGOCaml.connect}) is a hash table produced by the
+module \texttt{Hashtbl}.  This hash table contains the MD5 hashes of the \sql prepared
+statements, which are used to uniquely identify each prepared statement with the
+database server.  Now, if two threads are simultaneously executing the same statement,
+and they both discover it is not in the hash table, then they will both compute its
+MD5 hash and use it to store the prepared statement in the database.  The problem is
+that \postgresql cannot accept two prepared statements with the same identifier for
+the same connection, and will complain.  Therefore, if you intend to use \pgocaml in
+a threaded programme, make sure that each thread uses a separate connection handler.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Acknowledgements}
+\addcontentsline{toc}{section}{Acknowledgements}
+
+I would like to thank \jones, the author of \pgocaml, for reviewing the early drafts
+of this document and for answering all my doubts concerning the library.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{thebibliography}{9}
+\bibitem{pgocaml}	{\small\url{http://merjis.com/developers/pgocaml}}
+\bibitem{postgresql}	{\small\url{http://www.postgresql.org/}}
+\bibitem{ocaml}		{\small\url{http://caml.inria.fr/}}
+\bibitem{camlp}		{\small\url{http://caml.inria.fr/pub/old\_caml\_site/camlp4/index.html}}
+\bibitem{calendar}	{\small\url{http://www.lri.fr/~signoles/prog.en.html}}
+\bibitem{listoops}	{\small\url{http://svr5.postgresql.org/pgsql-sql/2007-02/msg00251.php}}
+\end{thebibliography}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Revision history}
+\addcontentsline{toc}{section}{Revision History}
+
+\begin{description}
+
+\item[Version 0.92 (2007-09-06)]
+
+Added a list of caveats to the programatic use of list expressions
+(thank you to \jones\ for pointing this out).
+
+\item[Version 0.91 (2007-09-05)]
+
+First public release.
+
+\end{description}
+
+\end{document}
+
