@@ -30,6 +30,7 @@ let nullable_name = "nullable"
 let unravel_name = "unravel"
 let column_comment_name = "column_comment"
 let table_comment_name = "table_comment"
+let proc_comment_name = "proc_comment"
 let type_name = "type"
 let class_name = "class"
 let funret_name = "funret"
@@ -86,6 +87,10 @@ let get_connection key =
       let table_comment_query = "select obj_description ($1, $2)" in
       PGOCaml.prepare dbh ~query:table_comment_query ~name:table_comment_name ();
 
+      (* Prepare the query returning the comment associated with a given function name. *)
+      let proc_comment_query = "select obj_description (oid, 'pg_proc') from pg_proc where proname=$1" in
+      PGOCaml.prepare dbh ~query:proc_comment_query ~name:proc_comment_name ();
+
       (* Prepare the query returning the pg_type.OID associated with a type name. *)
       let type_query = "select oid from pg_type where typname=$1" in
       PGOCaml.prepare dbh ~query:type_query ~name:type_name ();
@@ -101,12 +106,19 @@ let get_connection key =
       Hashtbl.add connections key dbh;
       dbh
 
+(*
+*)
+let debug_table = function
+	| `pg_class t -> "pg_class.oid=" ^ t
+	| `pg_type t -> "pg_type.oid=" ^ t
+
 (* By using CREATE DOMAIN, the user may define types which are essentially aliases
    for existing types.  If the original type is not recognised by PG'OCaml, this
    functions recurses through the pg_type table to see if it happens to be an alias
    for a type which we do know how to handle.
 *)
 let unravel_type dbh orig_type =
+  (*Printf.eprintf "unravel_type %ld\n" orig_type;*)
   let rec unravel_type_aux ft =
     try
       PGOCaml.name_of_type ft
@@ -124,6 +136,7 @@ let unravel_type dbh orig_type =
    the given column is nullable.  Note that this only works for real tables.
 *)
 let get_attnotnull dbh class_oid column =
+  (*Printf.eprintf "get_attnotnull %s %s\n" class_oid column;*)
   let params = [ Some class_oid; Some column ] in
   let rows = PGOCaml.execute dbh ~name:nullable_name ~params () in
   let not_nullable = match rows with
@@ -134,6 +147,7 @@ let get_attnotnull dbh class_oid column =
 (* Returns the pg_class.oid associated with a given pg_type.oid.
 *)
 let get_class_oid dbh type_oid =
+  (*Printf.eprintf "get_class_oid %s\n" type_oid;*)
   let params = [ Some type_oid ] in
   let rows = PGOCaml.execute dbh ~name:class_name ~params () in
   match rows with
@@ -146,6 +160,7 @@ let get_class_oid dbh type_oid =
 let rec get_column_comment =
   let rex = Pcre.regexp "\\bpgoc_null=(?<value>[t|f])" in
   fun dbh table_oid column ->
+    Printf.eprintf "get_column_comment %s %s\n" (debug_table table_oid) column;
     let class_oid = match table_oid with
       | `pg_class t -> t
       | `pg_type t  -> get_class_oid dbh t in
@@ -169,6 +184,7 @@ let rec get_column_comment =
 and get_table_comment =
   let rex = Pcre.regexp "\\bpgoc_link=(?<value>\\w+)" in
   fun dbh table_oid column ->
+    Printf.eprintf "get_table_comment %s %s\n" (debug_table table_oid) column;
     let obj_oid, class_oid, catalog = match table_oid with
       | `pg_class t -> t, t, "pg_class"
       | `pg_type t  -> t, (get_class_oid dbh t), "pg_type" in
@@ -176,29 +192,47 @@ and get_table_comment =
     let rows = PGOCaml.execute dbh ~name:table_comment_name ~params () in
     match rows with
       | [ [ Some comment ] ] ->
-	let substr = Pcre.exec ~rex comment in
-	let value = Pcre.get_named_substring rex "value" substr in
-	get_type_oid dbh value column
+	(try
+	  let substr = Pcre.exec ~rex comment in
+	  let value = Pcre.get_named_substring rex "value" substr in
+	  get_type_oid dbh value column
+	with _ ->
+	  get_attnotnull dbh class_oid column)
       | _ ->
 	get_attnotnull dbh class_oid column
 
 (* Returns the pg_type.oid corresponding to a type's named.
 *)
 and get_type_oid dbh table column =
+  (*Printf.eprintf "get_type_oid %s %s\n" table column;*)
   let params = [ Some table ] in
   let rows = PGOCaml.execute dbh ~name:type_name ~params () in
   match rows with
     | [ [ Some type_oid ] ] -> get_column_comment dbh (`pg_type type_oid) column
     | _ -> raise (Bad_table_comment table)
 
-(* Returns the pg_type.oid of return type of the given function.
+(* Checks whether there is a pgoc_null comment defined for the given function;
+   if so, extract nullability from it; otherwise, check nullability via the
+   pg_type.oid of the function's return type.
 *)
-let get_funret dbh funret column =
-  let params = [ Some funret ] in
-  let rows = PGOCaml.execute dbh ~name:funret_name ~params () in
-  match rows with
-    | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
-    | _			 -> raise (Bad_funret funret)
+let get_funret =
+  let rex = Pcre.regexp "\\bpgoc_null=(?<value>[t|f])" in
+  fun dbh funret column ->
+    Printf.eprintf "get_funret %s %s\n" funret column;
+    let params = [ Some funret ] in
+    let rows = PGOCaml.execute dbh ~name:proc_comment_name ~params () in
+    match rows with
+      | [ [ Some comment ] ] ->
+	let substr = Pcre.exec ~rex comment in
+	let value = Pcre.get_named_substring rex "value" substr in
+	(match value with
+	  | "f" -> false
+	  | _   -> true)  (* Whether explicitly "t" or otherwise, assume nullable. *)
+      | _ ->
+	let rows = PGOCaml.execute dbh ~name:funret_name ~params () in
+	match rows with
+	  | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
+	  | _			 -> raise (Bad_funret funret)
 
 (* Return the list of numbers a <= i < b.
 *)
@@ -447,6 +481,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
       let conversions =
 	List.mapi (
 	  fun i result ->
+	    Printf.eprintf "Determining column %d\n" i;
 	    let field_type = result.PGOCaml.field_type in
 	    let modifier = result.PGOCaml.modifier in
 	    let fn =

@@ -26,6 +26,14 @@ open ExtList
 let nullable_name = "nullable"
 let unravel_name = "unravel"
 
+(*
+*)
+type nullres =
+	| Everything
+	| Nothing
+	| Something of bool array
+	| Undefined
+
 (* We need a database connection while compiling.  If people use the
  * override flags like "database=foo", then we may connect to several
  * databases at once.  Keep track of that here.  Note that in the normal
@@ -74,9 +82,10 @@ let get_connection key =
       dbh
 
 (* By using CREATE DOMAIN, the user may define types which are essentially aliases
-   for existing types.  If the original type is not recognised by PG'OCaml, this
-   functions recurses through the pg_type table to see if it happens to be an alias
-   for a type which we do know how to handle. *)
+ * for existing types.  If the original type is not recognised by PG'OCaml, this
+ * functions recurses through the pg_type table to see if it happens to be an alias
+ * for a type which we do know how to handle.
+*)
 let unravel_type dbh orig_type =
   let rec unravel_type_aux ft =
     try
@@ -100,14 +109,24 @@ let rex = Pcre.regexp "\\$(@?)(\\??)([_a-z][_a-zA-Z0-9']*)"
 let pgsql_expand ?(flags = []) loc dbh query =
   (* Parse the flags. *)
   let f_execute = ref false in
-  let f_nullable_results = ref false in
+  let f_nullres = ref Undefined in
   let key = ref { host = None; port = None; user = None;
 		  password = None; database = None;
 		  unix_domain_socket_dir = None } in
   List.iter (
     function
     | "execute" -> f_execute := true
-    | "nullable-results" -> f_nullable_results := true
+    | "nullable-results"
+    | "nullres=all" -> f_nullres := Everything
+    | "nullres=none" -> f_nullres := Nothing
+    | str when String.starts_with str "nullres=" ->
+	let bool_of_directive = function
+	  | "t" -> true
+	  | "f" -> false
+	  | x   -> failwith ("Don't know what to do with nullres directive '" ^ x ^ "'") in
+	let raw = String.sub str 8 (String.length str - 8) in
+	let directives = Array.of_list (String.nsplit raw ",") in
+	f_nullres := Something (Array.map bool_of_directive directives)
     | str when String.starts_with str "host=" ->
 	let host = String.sub str 5 (String.length str - 5) in
 	key := { !key with host = Some host }
@@ -132,7 +151,7 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	)
   ) flags;
   let f_execute = !f_execute in
-  let f_nullable_results = !f_nullable_results in
+  let f_nullres = !f_nullres in
   let key = !key in
 
   (* Connect, if necessary, to the database. *)
@@ -338,24 +357,33 @@ let pgsql_expand ?(flags = []) loc dbh query =
 	    let fn =
 	      PGOCaml.name_of_type ~modifier field_type in
 	    let fn = fn ^ "_of_string" in
-	    let nullable =
-	      f_nullable_results ||
-	      match (result.PGOCaml.table, result.PGOCaml.column) with
-	      | Some table, Some column ->
-		  (* Find out whether the column is nullable from the
-		   * database pg_attribute table.
-		   *)
-		  let params =
-		    [ Some (PGOCaml.string_of_oid table);
-		      Some (PGOCaml.string_of_int column) ] in
-		  let rows =
-		    PGOCaml.execute my_dbh ~name:nullable_name ~params () in
-		  let not_nullable =
-		    match rows with
-		    | [ [ Some b ] ] -> PGOCaml.bool_of_string b
-		    | _ -> false in
-		  not not_nullable
-	      | _ -> true (* Assume it could be nullable. *) in
+	    let nullable = match f_nullres with
+	      | Everything  ->
+		true
+	      | Nothing     ->
+		false
+	      | Something directives ->
+		(try
+		  Array.get directives i
+		with
+		  _ -> failwith "There are more columns returned than directives defined")
+	      | Undefined   ->
+		(match (result.PGOCaml.table, result.PGOCaml.column) with
+		  | Some table, Some column ->
+		    (* Find out whether the column is nullable from the
+		     * database pg_attribute table.
+		     *)
+		    let params =
+		      [ Some (PGOCaml.string_of_oid table);
+		        Some (PGOCaml.string_of_int column) ] in
+		    let rows =
+		      PGOCaml.execute my_dbh ~name:nullable_name ~params () in
+		    let not_nullable =
+		      match rows with
+			| [ [ Some b ] ] -> PGOCaml.bool_of_string b
+			| _ -> false in
+		      not not_nullable
+		| _ -> true) (* Assume it could be nullable. *) in
 	    let col = <:expr< $lid:"c" ^ string_of_int i$ >> in
 	    if nullable then
 	      <:expr< Option.map PGOCaml.$lid:fn$ $col$ >>

@@ -30,6 +30,7 @@ let nullable_name = "nullable"
 let unravel_name = "unravel"
 let column_comment_name = "column_comment"
 let table_comment_name = "table_comment"
+let proc_comment_name = "proc_comment"
 let type_name = "type"
 let class_name = "class"
 let funret_name = "funret"
@@ -85,6 +86,10 @@ let get_connection key =
       (* Prepare the query returning the comment associated with a given OID. *)
       let table_comment_query = "select obj_description ($1, $2)" in
       PGOCaml.prepare dbh ~query:table_comment_query ~name:table_comment_name ();
+
+      (* Prepare the query returning the comment associated with a given function name. *)
+      let proc_comment_query = "select obj_description (oid, 'pg_proc') from pg_proc where proname=$1" in
+      PGOCaml.prepare dbh ~query:proc_comment_query ~name:proc_comment_name ();
 
       (* Prepare the query returning the pg_type.OID associated with a type name. *)
       let type_query = "select oid from pg_type where typname=$1" in
@@ -191,14 +196,27 @@ and get_type_oid dbh table column =
     | [ [ Some type_oid ] ] -> get_column_comment dbh (`pg_type type_oid) column
     | _ -> raise (Bad_table_comment table)
 
-(* Returns the pg_type.oid of return type of the given function.
+(* Checks whether there is a pgoc_null comment defined for the given function;
+   if so, extract nullability from it; otherwise, check nullability via the
+   pg_type.oid of the function's return type.
 *)
-let get_funret dbh funret column =
-  let params = [ Some funret ] in
-  let rows = PGOCaml.execute dbh ~name:funret_name ~params () in
-  match rows with
-    | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
-    | _			 -> raise (Bad_funret funret)
+let get_funret =
+  let rex = Pcre.regexp "\\bpgoc_null=(?<value>[t|f])" in
+  fun dbh funret column ->
+    let params = [ Some funret ] in
+    let rows = PGOCaml.execute dbh ~name:proc_comment_name ~params () in
+    match rows with
+      | [ [ Some comment ] ] ->
+	let substr = Pcre.exec ~rex comment in
+	let value = Pcre.get_named_substring rex "value" substr in
+	(match value with
+	  | "f" -> false
+	  | _   -> true)  (* Whether explicitly "t" or otherwise, assume nullable. *)
+      | _ ->
+	let rows = PGOCaml.execute dbh ~name:funret_name ~params () in
+	match rows with
+	  | [ [ Some table ] ] -> get_column_comment dbh (`pg_type table) column
+	  | _		       -> raise (Bad_funret funret)
 
 (* Return the list of numbers a <= i < b.
 *)
