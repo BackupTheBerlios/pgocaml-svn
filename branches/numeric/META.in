@@ -1,7 +1,7 @@
 name="@PACKAGE@"
 version="@VERSION@"
 description="PG'OCaml is a set of OCaml bindings for the PostgreSQL database."
-requires="unix,@EXTLIB@,csv,pcre,calendar"
+requires="unix,num,@EXTLIB@,csv,pcre,calendar"
 archive(byte)="pgocaml.cma"
 archive(native)="pgocaml.cmxa"
 
