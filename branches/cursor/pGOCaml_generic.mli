@@ -178,6 +178,8 @@ val execute : 'a t -> ?name:string -> ?portal:string -> params:param list -> uni
   * to find out the result types.
   *)
 
+val cursor : 'a t -> ?name:string -> ?portal:string -> params:param list -> (row -> unit monad) -> unit monad
+
 val close_statement : 'a t -> ?name:string -> unit -> unit monad
 (** [close_statement conn ?name ()] closes a prepared statement and frees
   * up any resources.
